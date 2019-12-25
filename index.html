@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width" />
+    <link href="ubuntufont.css" rel="stylesheet" type="text/css" />
+    <title>Gewichteter Notenschnittsberechner</title>
+    <script>
+      window.addEventListener('DOMContentLoaded', function() {
+        var selects = [{fach: "LK₁", multiplier: 13},
+                       {fach: "LK₂", multiplier: 13},
+                       {fach: "sGK₁", multiplier: 9},
+                       {fach: "sGK₂", multiplier: 9},
+                       {fach: "mGK₁", multiplier: 4},
+                       {fach: "mGK₂", multiplier: 4},
+                       {fach: "aF₁", multiplier: 4},
+                       {fach: "aF₂", multiplier: 4},
+                      ],
+            options = 15,
+            div = document.getElementById("selects"),
+            doCalc = false;
+        for(let obj of selects){
+          var select = obj.fach,
+          element = document.createElement("select");
+          element.id = select,
+          label = document.createElement("label"),
+          container = document.createElement("div");
+          for(let i = 0; i<=options; i++){
+            var opt = document.createElement("option");
+            opt.value = i;
+            opt.innerHTML = i+" Punkt(e) / Note "+punkteZuNote(i);
+            element.appendChild(opt);
+          }
+          label.setAttribute("for",select);
+          label.innerHTML = select;
+          if(localStorage.getItem(select) !== null){element.value = localStorage[select];doCalc = true;}
+          element.addEventListener("change", recalculate);
+          element.addEventListener("change", function (){
+            localStorage.setItem(this.id,this.value);
+          });
+          element.dataset.multiplier = obj.multiplier;
+          element.setAttribute("class","subject");
+          container.setAttribute("class","selectContainer");
+          container.appendChild(label);
+          container.appendChild(element);
+          div.appendChild(container);
+        }
+        if(doCalc){recalculate()}
+      });
+      function log(msg){
+        document.getElementById("results").children[0].innerHTML += msg+"\n";
+      }
+      function flushLog(){
+        document.getElementById("results").children[0].innerHTML = "";
+      }
+      function punkteZuNote(punkte){
+        var table = {15: "1+",
+                     14: "1",
+                     13: "1-",
+                     12: "2+",
+                     11: "2",
+                     10: "2-",
+                     9: "3+",
+                     8: "3",
+                     7: "3-",
+                     6: "4+",
+                     5: "4",
+                     4: "4-",
+                     3: "5+",
+                     2: "5",
+                     1: "5-",
+                     0: "6"
+                    };
+        return table[punkte];
+      }
+      function recalculate(){
+        flushLog();
+        var results = [], total = 0;
+        for(let element of document.getElementsByClassName("subject")){
+          let points = parseInt(element.value)*parseInt(element.dataset.multiplier);
+          log(element.id+": "+element.value+"*"+element.dataset.multiplier+" = "+points);
+          results.push(points);
+          total += points;
+        }
+        log("-----");
+        log("Punkte insg.: " + results.join("+") + " = " + total);
+        log("-----");
+        if(total < 301){log("Leider durchgefallen, da unter 300 Punkte/schlechter als 4 :(");return}
+        else if(total >= 823){log("Sie haben einen Schnitt von 1,0 oder besser!"); return}
+        log(durchschnitt(total) + " ist die gewichtete Abidurchschnittsnote der gewählten Konfiguration");
+      }
+      function durchschnitt(zahl){ // vereinfacht würde auch Math.floor((((17/3)-(i/180)))*10)/10) funktionieren, hab' alle Zahlen verifiziert und es stimmt überein. Quelle: http://www.abi-nachholen.de/abitur-punkte.html
+        let x = zahl-300,
+        i = 0;
+        while(i*18 < x){
+          i++;
+        }
+        return Math.round(((4-(i*0.1))*10))/10;
+      }
+    </script>
+    <style>
+    body{
+      font-family: ubuntu;
+    }
+    .selectContainer {
+      float:left;
+      margin-right: 2%;
+    }
+    label{
+      margin-right: 5px;
+    }
+    #results {
+      background: grey;
+      color: white;
+      font-family: "Ubuntu Mono";
+      padding: 1%;
+      font-size: 13pt;
+      overflow: auto;
+      word-wrap: break-word;
+    }
+    #selects{
+      overflow: auto;
+    }
+    a:visited{
+      color: black;
+    }
+    </style>
+  </head>
+  <body>
+    <p>Punkte in den Fächern eingeben:</p>
+    <div id="selects"></div><br /> <br />
+    <div id="results"><pre>Result shows here
+</pre></div>
+<br /> <br /><hr>
+<p style="font-family:Ubuntu; word-wrap: break-word;">Keine Gewährleistung. Nach folgender Tabelle gebaut: <a href="http://gesetze.berlin.de/jportal/;jsessionid=1CE43467AAD8B7478DDAABADC4F42F11.jp20?quelle=jlink&query=AbiNSchPrV+BE&psml=bsbeprod.psml&max=true&aiz=true#jlr-AbiNSchPrVBE2009V2P18">http://gesetze.berlin.de/jportal/;jsessionid=1CE43467AAD8B7478DDAABADC4F42F11.jp20?quelle=jlink&query=AbiNSchPrV+BE&psml=bsbeprod.psml&max=true&aiz=true#jlr-AbiNSchPrVBE2009V2P18</a>. Eingegebene Daten verlassen nicht das Gerät (es sei denn Sie bauen die Speicherkarte aus), werden aber im localStorage gespeichert.</p>
+  </body>
+</html>
